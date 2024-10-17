@@ -138,14 +138,14 @@ function set_wordle_word($word, $user_word, $attempt)
 
   foreach ($user_word as $index => $letter) {
     if ($letter === $word[$index]) {
-      $wordle_letter = (GREEN . $letter . WHITE);
+      $wordle_letter = (GREEN . strtoupper($letter) . WHITE);
       array_push($wordle_word, $wordle_letter);
       $hits++;
     } else if (in_array($letter, $word)) {
-      $wordle_letter = (YELLOW . $letter . WHITE);
+      $wordle_letter = (YELLOW . strtoupper($letter) . WHITE);
       array_push($wordle_word, $wordle_letter);
     } else {
-      $wordle_letter = (WHITE . $letter);
+      $wordle_letter = (WHITE . strtoupper($letter));
       array_push($wordle_word, $wordle_letter);
     }
   }

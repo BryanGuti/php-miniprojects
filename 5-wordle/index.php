@@ -124,7 +124,8 @@ function print_wordle()
 
 function is_allowed_word($word)
 {
-  $pattern = "/^[a-zA-z]{6}$/";
+  global $argv;
+  $pattern = "/^[a-zA-z]{{$argv[1]}}$/";
   return preg_match($pattern, $word);
 }
 
@@ -132,25 +133,54 @@ function set_wordle_word($word, $user_word, $attempt)
 {
   $hits = 0;
   global $player_words;
+  $word_structure = [];
   $user_word = str_split($user_word);
   $wordle_word = [];
   $wordle_letter = "";
 
+  foreach ($word as $letter) {
+    array_push(
+      $word_structure,
+      [
+        "letter" => $letter,
+        "is_right" => false,
+        "is_in_word" => false
+      ]
+    );
+  }
+
+
   foreach ($user_word as $index => $letter) {
-    if ($letter === $word[$index]) {
-      $wordle_letter = (GREEN . strtoupper($letter) . WHITE);
-      array_push($wordle_word, $wordle_letter);
-      $hits++;
-    } else if (in_array($letter, $word)) {
-      $wordle_letter = (YELLOW . strtoupper($letter) . WHITE);
-      array_push($wordle_word, $wordle_letter);
-    } else {
-      $wordle_letter = (WHITE . strtoupper($letter));
-      array_push($wordle_word, $wordle_letter);
+    if ($letter !== $word[$index]) continue;
+
+    $wordle_letter = (GREEN . strtoupper($letter) . WHITE);
+    $wordle_word[$index] = $wordle_letter;
+    $word_structure[$index]["is_right"] = true;
+    $hits++;
+  }
+
+  foreach ($user_word as $index => $letter) {
+    if ($letter === $word[$index]) continue;
+    $wordle_letter = (WHITE . strtoupper($letter));
+    if (!in_array($letter, $word)) {
+      $wordle_word[$index] = $wordle_letter;
+      continue;
     }
+
+    foreach ($word as $index_letter => $verification_letter) {
+      if ($verification_letter !== $letter) continue;
+      if ($word_structure[$index_letter]["is_right"]) continue;
+      if ($word_structure[$index_letter]["is_in_word"]) continue;
+
+      $word_structure[$index_letter]["is_in_word"] = true;
+      $wordle_letter = (YELLOW . strtoupper($letter) . WHITE);
+      break;
+    }
+    $wordle_word[$index] = $wordle_letter;
   }
 
   $player_words[$attempt] = $wordle_word;
+  ksort($player_words[$attempt]);
 
   return $hits;
 }
@@ -169,6 +199,7 @@ function start_wordle_game($word)
     echo "\t";
 
     if (($tries >= MAX_ATTEMPTS) || $has_win) break;
+
     $user_word = readline("Word: ");
 
     if (!is_allowed_word($user_word)) continue;
